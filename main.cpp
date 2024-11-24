@@ -51,6 +51,15 @@ public:
         m_elements++;
     }
 
+    template <typename K>
+    std::optional<std::string> get(K&& key) {
+        std::optional<size_t> index = contains(key);
+        if (!index) {
+            return std::nullopt;
+        }
+        return m_table[*index].m_value;
+    }
+
     void print() const
     {
         int count = 0;
@@ -75,6 +84,27 @@ private:
     size_t hash(const std::string &key)
     {
         return std::hash<std::string>{}(key);
+    }
+    
+    std::optional<size_t> contains(const std::string& key) {
+        size_t index = hash(key) % m_size;
+        size_t newIndex = index;
+        size_t attempts = 0;
+
+        while (attempts < m_size) {
+            if (!isOccupied(newIndex)) {
+                return std::nullopt;
+            }
+            
+            if (m_table[newIndex].m_key == key) {
+                return newIndex;
+            }
+
+            attempts++;
+            newIndex = (newIndex + 1) % m_size;
+        }
+        
+        return std::nullopt;
     }
 
     size_t probe(size_t index)
@@ -122,18 +152,32 @@ private:
     }
 };
 
-int main()
-{
-    HashTable ht = HashTable();
-    ht.insert("1", "1");
-    ht.insert("2", "2");
-    ht.insert("3", "3");
-    ht.insert("4", "4");
-    ht.insert("5", "5");
-    ht.insert("6", "6");
-    ht.insert("7", "7");
-    ht.insert("8", "8");
-    ht.insert("9", "9");
-    ht.print();
-    return 0;
+int main() {
+   HashTable ht(3);
+
+   ht.insert("cat", "meow");
+   ht.insert("dog", "woof");
+   if (auto val = ht.get("cat")) {
+       std::cout << "cat says: " << *val << std::endl;
+   }
+
+   ht.insert("act", "theater");
+   if (auto val = ht.get("act")) {
+       std::cout << "act: " << *val << std::endl;
+   }
+
+   ht.insert("bird", "chirp");
+   ht.insert("fish", "blub");
+   
+   std::vector<std::string> keys = {"cat", "dog", "act", "bird", "fish", "bear"};
+   for (const auto& key : keys) {
+       if (auto val = ht.get(key)) {
+           std::cout << key << " -> " << *val << std::endl;
+       } else {
+           std::cout << "ERROR: Couldn't find " << key << std::endl;
+       }
+   }
+
+   return 0;
+
 }
