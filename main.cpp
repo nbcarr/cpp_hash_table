@@ -24,6 +24,7 @@ public:
     HashTable(uint32_t size = 10)
     {
         m_size = size;
+        m_max_load_factor = .75;
         m_table.resize(size);
     }
 
@@ -32,7 +33,7 @@ public:
     {
         // handle same key being added
         // Check if h1 > size (out of bounds)
-        if (static_cast<float>(m_elements + 1) / m_size >= 0.75)
+        if (needsResize())
         {
             std::cout << "resizing..." << std::endl;
             resize(m_size * 2);
@@ -98,6 +99,31 @@ public:
         m_elements--;
     }
 
+    void clear() {
+        m_elements = 0;
+        m_table = std::vector<Bucket>(m_size);
+    }
+
+    uint32_t size() const {
+        return m_size;
+    }
+
+    bool empty() const {
+        return m_elements == 0;
+    }
+
+    float load_factor() const {
+        return static_cast<float>(m_elements) / m_size;
+    }
+
+    uint32_t capacity() const {
+        return m_size;
+    }
+
+    float max_load_factor() {
+        return m_max_load_factor;
+    }
+
     void print() const
     {
         int count = 0;
@@ -118,10 +144,15 @@ public:
 private:
     uint32_t m_size;
     uint32_t m_elements;
+    float m_max_load_factor;
     std::vector<Bucket> m_table;
     size_t hash(const std::string &key)
     {
         return std::hash<std::string>{}(key);
+    }
+
+    bool needsResize() {
+        return load_factor() >= max_load_factor();
     }
 
     std::optional<size_t> contains(const std::string &key)
