@@ -31,8 +31,6 @@ public:
     template <typename K, typename V>
     void insert(K &&key, V &&value)
     {
-        // handle same key being added
-        // Check if h1 > size (out of bounds)
         if (needsResize())
         {
             std::cout << "resizing..." << std::endl;
@@ -41,6 +39,12 @@ public:
 
         Bucket bucket(key, value);
         size_t index = hash(key) % m_size;
+
+        // Overwrite existing keys
+        if (auto existing = contains(key)) {
+            m_table[*existing] = Bucket(key, value);
+            return;
+        }
 
         if (isOccupied(index))
         {
@@ -99,28 +103,34 @@ public:
         m_elements--;
     }
 
-    void clear() {
+    void clear()
+    {
         m_elements = 0;
         m_table = std::vector<Bucket>(m_size);
     }
 
-    uint32_t size() const {
+    uint32_t size() const
+    {
         return m_size;
     }
 
-    bool empty() const {
+    bool empty() const
+    {
         return m_elements == 0;
     }
 
-    float load_factor() const {
+    float load_factor() const
+    {
         return static_cast<float>(m_elements) / m_size;
     }
 
-    uint32_t capacity() const {
+    uint32_t capacity() const
+    {
         return m_size;
     }
 
-    float max_load_factor() {
+    float max_load_factor()
+    {
         return m_max_load_factor;
     }
 
@@ -151,7 +161,8 @@ private:
         return std::hash<std::string>{}(key);
     }
 
-    bool needsResize() {
+    bool needsResize()
+    {
         return load_factor() >= max_load_factor();
     }
 
