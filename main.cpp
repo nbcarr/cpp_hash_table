@@ -57,6 +57,14 @@ public:
     }
 
     template <typename K>
+    std::string& operator[](K &&key) {
+        if (auto index = contains(key)) {
+            return m_table[*index].m_value;
+        }
+        throw std::runtime_error("ERROR: Key does not exist");
+    }
+
+    template <typename K>
     std::optional<std::string> get(K &&key)
     {
         std::optional<size_t> index = contains(key);
@@ -283,5 +291,5 @@ int main()
         }
     }
 
-    ht.print();
+    std::cout << ht["cat"] << std::endl;
 }
