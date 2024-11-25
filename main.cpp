@@ -33,7 +33,6 @@ public:
     {
         if (needsResize())
         {
-            std::cout << "resizing..." << std::endl;
             resize(m_size * 2);
         }
 
@@ -41,14 +40,14 @@ public:
         size_t index = hash(key) % m_size;
 
         // Overwrite existing keys
-        if (auto existing = contains(key)) {
+        if (auto existing = contains(key))
+        {
             m_table[*existing] = Bucket(key, value);
             return;
         }
 
         if (isOccupied(index))
         {
-            std::cout << "collision at index " << index << std::endl;
             index = probe(index);
         }
 
@@ -57,8 +56,10 @@ public:
     }
 
     template <typename K>
-    std::string& operator[](K &&key) {
-        if (auto index = contains(key)) {
+    std::string &operator[](K &&key)
+    {
+        if (auto index = contains(key))
+        {
             return m_table[*index].m_value;
         }
         throw std::runtime_error("ERROR: Key does not exist");
@@ -81,7 +82,6 @@ public:
         std::optional<size_t> index = contains(key);
         if (!index)
         {
-            std::cout << "Key does not exist" << std::endl;
             return;
         }
         size_t curr = *index;
@@ -142,21 +142,32 @@ public:
         return m_max_load_factor;
     }
 
-    void print() const
+    void print(bool show_empty = false) const
     {
-        int count = 0;
-        for (const Bucket &b : m_table)
+        std::cout << "\n=== Hash Table Statistics ===\n"
+                  << "Size: " << m_size << "\n"
+                  << "Elements: " << m_elements << "\n"
+                  << "Load Factor: " << load_factor() << "\n"
+                  << "========================\n\n";
+
+        for (size_t i = 0; i < m_table.size(); ++i)
         {
-            count += 1;
+            const Bucket &b = m_table[i];
             if (b.m_key.empty() && b.m_value.empty())
             {
-                std::cout << count << " EMPTY" << std::endl;
+                if (show_empty)
+                {
+                    std::cout << "[" << i << "]: EMPTY\n";
+                }
             }
             else
             {
-                std::cout << count << " KEY: " << b.m_key << " VALUE: " << b.m_value << std::endl;
+                std::cout << "[" << i << "]: "
+                          << "Key: \"" << b.m_key << "\" "
+                          << "Value: \"" << b.m_value << "\"\n";
             }
         }
+        std::cout << std::endl;
     }
 
 private:
@@ -215,7 +226,7 @@ private:
             attempts++;
             if (attempts >= m_size)
             {
-                throw std::runtime_error("Hash table is full");
+                throw std::runtime_error("ERROR: Table is at max capacity");
             }
         }
         return newIndex;
@@ -223,6 +234,10 @@ private:
 
     void resize(size_t newSize)
     {
+        if (newSize < m_elements)
+        {
+            throw std::runtime_error("ERROR: Entered size is less than number of elements");
+        }
         std::vector<Bucket> oldTable = std::move(m_table);
         m_size = newSize;
         m_elements = 0;
@@ -292,4 +307,6 @@ int main()
     }
 
     std::cout << ht["cat"] << std::endl;
+
+    ht.print();
 }
